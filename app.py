@@ -55,30 +55,34 @@ def background_thread(args):
         print('btnV', btnV)
         
         if btnV == 0:
-            if (dataList) > 0:
-                fuj = str(dataList).replace("'","\"")
-                print('fuj')
-                print(fuj)
+            if len(dataList) > 0:
+                datas = str(dataList)
+                datas = datas.replace("'","\"")
+                print('datas')
+                print(datas)
                 
                 cursor = db.cursor()
-                cursor.execute("INSERT INTO final (hodnoty) VALUES ('%s')" % (fuj))
+                cursor.execute("INSERT INTO final (hodnoty) VALUES ('%s')" % (datas))
                 
                 db.commit()
                 
                 file = open("static/files/test.txt", "a+");
-                file.write("%s\r\n" %fuj);
+                file.write("%s\r\n" %datas);
                 file.close()
                 
             dataList = []
             dataCounter = 0
         
         elif btnV == 1:
+            yValue = float(ser.readline())
             dataDict = {
             "x": dataCounter,
-            "y": float(ser.readline())
+            "y": yValue
             }
             dataList.append(dataDict)
-    
+            
+            socketio.emit('my_response',
+                          {'data': float(ser.readline()), 'count': count}, namespace='/test')
         
     db.close()
 
@@ -124,12 +128,12 @@ def test_connect():
             thread = socketio.start_background_task(target=background_thread, args=session._get_current_object())
 
 @socketio.on('click_eventStart', namespace='/test')
-def db_message(message):
+def db_message(message):   
     session['btn_value'] = 1
 
 @socketio.on('click_eventStop', namespace='/test')
-def db_message(message):
-   session['btn_value'] = 0
+def db_message(message):   
+    session['btn_value'] = 0
 
 @socketio.on('disconnect', namespace='/test')
 def test_disconnect():
